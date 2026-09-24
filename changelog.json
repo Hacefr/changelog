@@ -1,74 +1,81 @@
-[
-  {
-    "version": "Friday Update ig (V1.19.2)",
-    "date": "9/24/26",
-    "changes": [
-      {
-        "tag": "ADD",
-        "type": "ink-add",
-        "text": "Player grave trusting: now you can trust players to claim your grave for you!"
-      },
-      {
-        "tag": "ADD",
-        "type": "ink-add",
-        "text": "New changelog page."
-      },
-      {
-        "tag": "FIX",
-        "type": "ink-fix",
-        "text": "Lava killing players even if pvp is disabled."
-      },
-      {
-        "tag": "FIX",
-        "type": "ink-fix",
-        "text": "Finally fixed smithing tables."
-      },
-      {
-        "tag": "FIX",
-        "type": "ink-fix",
-        "text": "Creative not allowing players to place blocks."
-      },
-      {
-        "tag": "FIX",
-        "type": "ink-fix",
-        "text": "Smithing table being used to dupe barrier blocks"
-      },
-      {
-        "tag": "FIX",
-        "type": "ink-fix",
-        "text": "Graves being able to be destroyed with wind charges"
-      },
-      {
-        "tag": "CHANGE",
-        "type": "ink-change",
-        "text": "Replaced the fireworks inside the Misc shop."
-      },
-      {
-        "tag": "CHANGE",
-        "type": "ink-change",
-        "text": "PVP has been revamped"
-      },
-      {
-        "tag": "CHANGE",
-        "type": "ink-change",
-        "text": "Reduced teleport to HUB to 4s"
-      },
-      {
-        "tag": "CHANGE",
-        "type": "ink-change",
-        "text": "Increased mobs spawn rate to 7s"
-      }
-    ]
+{
+  "announcement": {
+    "enabled": true,
+    "type": "online",
+    "message": "Server is currently up!"
   },
-  {
-    "version": "",
-    "date": "24/09/26",
-    "changes": [
-      {
-        "tag": "ADD",
-        "type": "ink-add",
-        "text": "New feature added."
-      }
-    ]
-  }
-]
+  "updates": [
+    {
+      "version": "Friday Update ig (V1.19.2)",
+      "date": "9/24/26",
+      "changes": [
+        {
+          "tag": "ADD",
+          "type": "ink-add",
+          "text": "Player grave trusting: now you can trust players to claim your grave for you!"
+        },
+        {
+          "tag": "ADD",
+          "type": "ink-add",
+          "text": "New changelog page."
+        },
+        {
+          "tag": "FIX",
+          "type": "ink-fix",
+          "text": "Lava killing players even if pvp is disabled."
+        },
+        {
+          "tag": "FIX",
+          "type": "ink-fix",
+          "text": "Finally fixed smithing tables."
+        },
+        {
+          "tag": "FIX",
+          "type": "ink-fix",
+          "text": "Creative not allowing players to place blocks."
+        },
+        {
+          "tag": "FIX",
+          "type": "ink-fix",
+          "text": "Smithing table being used to dupe barrier blocks"
+        },
+        {
+          "tag": "FIX",
+          "type": "ink-fix",
+          "text": "Graves being able to be destroyed with wind charges"
+        },
+        {
+          "tag": "CHANGE",
+          "type": "ink-change",
+          "text": "Replaced the fireworks inside the Misc shop."
+        },
+        {
+          "tag": "CHANGE",
+          "type": "ink-change",
+          "text": "PVP has been revamped"
+        },
+        {
+          "tag": "CHANGE",
+          "type": "ink-change",
+          "text": "Reduced teleport to HUB to 4s"
+        },
+        {
+          "tag": "CHANGE",
+          "type": "ink-change",
+          "text": "Increased mobs spawn rate to 7s"
+        }
+      ]
+    },
+    {
+      "version": "",
+      "date": "24/09/26",
+      "changes": [
+        {
+          "tag": "ADD",
+          "type": "ink-add",
+          "text": "New feature added."
+        }
+      ]
+    }
+  ]
+}
