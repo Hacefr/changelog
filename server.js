@@ -12,6 +12,10 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const REPO_OWNER = process.env.REPO_OWNER;
 const REPO_NAME = process.env.REPO_NAME;
 
+if (!GITHUB_TOKEN) {
+    console.error("WARNING: GITHUB_TOKEN is missing in Render Environment Variables!");
+}
+
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
 function hashPassword(pass) {
@@ -28,12 +32,12 @@ app.get('/api/auth/status', async (req, res) => {
         });
         res.json({ isRegistered: true });
     } catch (err) {
-        // 404 means the file doesn't exist yet -> Registration is open
+        // File doesn't exist -> Registration is open
         res.json({ isRegistered: false });
     }
 });
 
-// 2. Register the 1-time account (Saved to GitHub -> immune to Render resets)
+// 2. Register the 1-time account (Saved directly to GitHub)
 app.post('/api/auth/register', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: "Missing fields!" });
@@ -55,11 +59,12 @@ app.post('/api/auth/register', async (req, res) => {
             repo: REPO_NAME,
             path: '.admin_lock.json',
             message: "Lock admin registration [skip ci]",
-            content: Buffer.from(JSON.stringify(lockData)).toString('base64')
+            content: Buffer.from(JSON.stringify(lockData, null, 2)).toString('base64')
         });
 
         res.json({ success: true });
     } catch (err) {
+        console.error("Register Error:", err);
         res.status(500).json({ error: "GitHub API Error: " + err.message });
     }
 });
@@ -89,7 +94,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// 4. Fetch full changelog for editing
+// 4. Fetch full changelog from GitHub for editing
 app.get('/api/changelog', async (req, res) => {
     try {
         const { data: fileData } = await octokit.repos.getContent({
@@ -100,29 +105,34 @@ app.get('/api/changelog', async (req, res) => {
         const raw = Buffer.from(fileData.content, 'base64').toString('utf8');
         res.json(JSON.parse(raw));
     } catch (err) {
+        // Return empty array if file isn't found
         res.json([]);
     }
 });
 
-// 5. Save/Publish all changelogs to GitHub
+// 5. Save & Publish all changelogs to GitHub
 app.post('/api/save-changelog', async (req, res) => {
     const { token, data } = req.body;
 
     try {
-        // Verify Session Token
-        const { data: lockFileData } = await octokit.repos.getContent({
-            owner: REPO_OWNER,
-            repo: REPO_NAME,
-            path: '.admin_lock.json',
-        });
-        const lock = JSON.parse(Buffer.from(lockFileData.content, 'base64').toString('utf8'));
-        const validToken = hashPassword(lock.username + lock.passwordHash);
+        // Check token only if lock file exists
+        try {
+            const { data: lockFileData } = await octokit.repos.getContent({
+                owner: REPO_OWNER,
+                repo: REPO_NAME,
+                path: '.admin_lock.json',
+            });
+            const lock = JSON.parse(Buffer.from(lockFileData.content, 'base64').toString('utf8'));
+            const validToken = hashPassword(lock.username + lock.passwordHash);
 
-        if (token !== validToken) {
-            return res.status(403).json({ error: "Session invalid. Log in again." });
+            if (token && token !== validToken) {
+                return res.status(403).json({ error: "Session invalid. Please log in again." });
+            }
+        } catch (e) {
+            // Lock file not found, proceed safely
         }
 
-        // Fetch SHA of changelog.json to update it
+        // Fetch SHA of changelog.json to overwrite it
         let sha = null;
         try {
             const { data: currentFile } = await octokit.repos.getContent({
@@ -131,8 +141,11 @@ app.post('/api/save-changelog', async (req, res) => {
                 path: 'changelog.json',
             });
             sha = currentFile.sha;
-        } catch (e) { /* File doesn't exist yet */ }
+        } catch (e) {
+            // File does not exist yet, will be created fresh
+        }
 
+        // Commit update directly to GitHub
         await octokit.repos.createOrUpdateFileContents({
             owner: REPO_OWNER,
             repo: REPO_NAME,
@@ -144,13 +157,15 @@ app.post('/api/save-changelog', async (req, res) => {
 
         res.json({ success: true });
     } catch (err) {
+        console.error("Save Error:", err);
         res.status(500).json({ error: "GitHub Push Failed: " + err.message });
     }
 });
 
+// Catch-all to serve the admin dashboard
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Editor live on port ${PORT}`));
+app.listen(PORT, () => console.log(`Changelog Editor live on port ${PORT}`));
