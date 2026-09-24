@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Changelog</title>
+    <title>Server Changelog & Status</title>
     <!-- Authentic In-Game Minecraft Font -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/South-Paw/typeface-minecraft@master/index.css">
 
@@ -32,6 +32,47 @@
             margin: 0;
         }
 
+        /* --- ADMIN ANNOUNCEMENT / SERVER STATUS BANNER --- */
+        .status-banner {
+            max-width: 900px;
+            width: 100%;
+            margin-bottom: 20px;
+            padding: 14px 20px;
+            border-radius: 4px;
+            border: 3px solid #000;
+            display: none; /* Shown dynamically if set */
+            box-shadow: 0 6px 20px rgba(0,0,0,0.8);
+            line-height: 1.5;
+        }
+
+        .status-maintenance {
+            background: #521515;
+            border-color: #ff5555;
+            color: #ffe6e6;
+        }
+
+        .status-online {
+            background: #193d14;
+            border-color: #55ff55;
+            color: #e6ffe6;
+        }
+
+        .status-title {
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .status-body {
+            font-size: 11px;
+            opacity: 0.95;
+        }
+
+        /* --- MAIN WORKSPACE --- */
         .workspace {
             display: flex;
             gap: 25px;
@@ -51,15 +92,15 @@
             border-radius: 6px;
             flex: 1;
             min-width: 320px;
-            max-width: 480px;
+            max-width: 500px;
         }
 
         .page {
             background: #c8b693;
             border: 3px solid #8e7b57;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.15);
-            padding: 25px 20px;
-            min-height: 480px;
+            padding: 25px 22px;
+            min-height: 520px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -71,19 +112,39 @@
             font-size: 16px;
             border-bottom: 2px solid #8e7b57;
             padding-bottom: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             text-transform: uppercase;
         }
 
         .page-content {
             flex-grow: 1;
             color: #2b251b;
-            font-size: 13px;
+            font-size: 12px;
             line-height: 1.6;
+            overflow-y: auto;
+            max-height: 420px;
+            padding-right: 4px;
         }
 
-        .update-version { font-size: 15px; color: #1f1a13; font-weight: bold; margin-bottom: 4px; }
-        .update-date { font-size: 11px; color: #64553f; margin-bottom: 14px; display: block; }
+        /* Scrollbar */
+        .page-content::-webkit-scrollbar { width: 5px; }
+        .page-content::-webkit-scrollbar-thumb { background: #8e7b57; }
+
+        .update-version { font-size: 15px; color: #1f1a13; font-weight: bold; margin-bottom: 2px; }
+        .update-date { font-size: 10px; color: #64553f; margin-bottom: 14px; display: block; }
+
+        /* Categories & Lists */
+        .category-header {
+            color: #5c3b1e;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 14px;
+            margin-bottom: 6px;
+            border-bottom: 1px dashed #a4916c;
+            padding-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
         .change-list {
             list-style: none;
@@ -91,12 +152,13 @@
             margin: 0;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
         .change-list li {
             position: relative;
-            padding-left: 14px;
+            padding-left: 12px;
+            font-size: 11px;
         }
 
         .change-list li::before {
@@ -106,7 +168,7 @@
             color: #55442e;
         }
 
-        .ink-tag { font-size: 11px; font-weight: bold; display: inline-block; margin-right: 4px; }
+        .ink-tag { font-size: 10px; font-weight: bold; display: inline-block; margin-right: 4px; }
         .ink-add { color: #1e7025; }
         .ink-fix { color: #174ea6; }
         .ink-change { color: #a36200; }
@@ -116,16 +178,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 15px;
+            margin-top: 12px;
             border-top: 2px dashed #a4916c;
-            padding-top: 12px;
+            padding-top: 10px;
         }
 
         .nav-btn {
             background: #8e7b57;
             border: 2px solid #3f3627;
             color: #fff;
-            padding: 6px 12px;
+            padding: 5px 10px;
             cursor: pointer;
             font-size: 11px;
             box-shadow: inset 1px 1px 0px #b4a37f, inset -1px -1px 0px #5c4e33;
@@ -149,9 +211,9 @@
 
         .library-header {
             color: #e5c38c;
-            font-size: 15px;
+            font-size: 14px;
             text-align: center;
-            padding-bottom: 12px;
+            padding-bottom: 10px;
             border-bottom: 3px solid #140b06;
             text-transform: uppercase;
             text-shadow: 1px 1px #000;
@@ -163,14 +225,14 @@
             flex-direction: column;
             gap: 10px;
             overflow-y: auto;
-            max-height: 430px;
+            max-height: 450px;
             padding-right: 4px;
         }
 
         .shelf-book {
             background: #6e3319;
             border: 2px solid #000;
-            padding: 10px 12px;
+            padding: 9px 12px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
@@ -184,13 +246,20 @@
             border-color: #55ff55;
             box-shadow: inset 1px 1px 0px #558b40, inset -1px -1px 0px #1d3016;
         }
-        .shelf-book-title { color: #ffffff; font-size: 12px; text-shadow: 1px 1px #000; }
+        .shelf-book-title { color: #ffffff; font-size: 11px; text-shadow: 1px 1px #000; }
         .shelf-book-date { color: #d1b899; font-size: 10px; }
     </style>
 </head>
 <body>
 
+    <!-- SERVER STATUS / ANNOUNCEMENT BANNER -->
+    <div class="status-banner" id="status-banner">
+        <div class="status-title" id="status-title">⚡ SERVER NOTICE</div>
+        <div class="status-body" id="status-body">Notice details loading...</div>
+    </div>
+
     <div class="workspace">
+        <!-- BOOK -->
         <div class="book-container">
             <div class="page">
                 <div>
@@ -206,6 +275,7 @@
             </div>
         </div>
 
+        <!-- LIBRARY ARCHIVE -->
         <div class="library-container">
             <div class="library-header">&#128218; Library Archive</div>
             <div class="library-shelf" id="library-shelf"></div>
@@ -216,16 +286,33 @@
         let changelogPages = [];
         let currentPage = 0;
 
-        // Fetch live changelog from GitHub repo (cache-busted to avoid delay)
         fetch('changelog.json?t=' + Date.now())
             .then(res => res.json())
             .then(data => {
-                changelogPages = data;
+                // Support both new { announcement, updates } structure or legacy array
+                if (data.updates) {
+                    renderAnnouncement(data.announcement);
+                    changelogPages = data.updates;
+                } else {
+                    changelogPages = data;
+                }
                 renderPage();
             })
             .catch(err => {
                 document.getElementById('page-content').innerHTML = "Could not load changelog.";
             });
+
+        function renderAnnouncement(ann) {
+            if (!ann || !ann.enabled) return;
+            const banner = document.getElementById('status-banner');
+            const title = document.getElementById('status-title');
+            const body = document.getElementById('status-body');
+
+            banner.className = `status-banner status-${ann.type}`;
+            title.innerHTML = ann.type === "maintenance" ? "🛠 SERVER MAINTENANCE" : "📢 ANNOUNCEMENT";
+            body.innerHTML = ann.message;
+            banner.style.display = "block";
+        }
 
         function renderShelf() {
             const shelfEl = document.getElementById("library-shelf");
@@ -245,14 +332,18 @@
             const prevBtn = document.getElementById("prev-btn");
             const nextBtn = document.getElementById("next-btn");
 
-            let changesHtml = pageData.changes.map(c => 
-                `<li><span class="ink-tag ${c.type}">[${c.tag}]</span> ${c.text}</li>`
-            ).join('');
+            // Renders changes and separator categories
+            let itemsHtml = pageData.changes.map(c => {
+                if (c.type === "separator") {
+                    return `<div class="category-header">✦ ${c.text} ✦</div>`;
+                }
+                return `<li><span class="ink-tag ${c.type}">[${c.tag}]</span> ${c.text}</li>`;
+            }).join('');
 
             contentEl.innerHTML = `
                 <div class="update-version">${pageData.version}</div>
                 <span class="update-date">${pageData.date}</span>
-                <ul class="change-list">${changesHtml}</ul>
+                <ul class="change-list">${itemsHtml}</ul>
             `;
 
             counterEl.innerText = `Page ${currentPage + 1} of ${changelogPages.length}`;
