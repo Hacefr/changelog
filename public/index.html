@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Changelog Admin Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Changelog Admin Panel</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/South-Paw/typeface-minecraft@master/index.css">
 
     <style>
@@ -18,105 +19,186 @@
             padding: 20px;
         }
 
-        .box {
+        /* Login Card */
+        .auth-card {
             background: #1e1e1e;
             border: 3px solid #3f3f3f;
             padding: 30px;
-            max-width: 550px;
+            max-width: 420px;
             width: 100%;
             box-shadow: 0 10px 40px rgba(0,0,0,0.8);
         }
 
-        h2 { color: #55ff55; margin-bottom: 20px; font-size: 18px; text-shadow: 1px 1px #000; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; color: #888; font-size: 11px; margin-bottom: 6px; }
+        /* Dashboard (Editor + Preview side-by-side) */
+        .dashboard {
+            display: none;
+            gap: 30px;
+            max-width: 1050px;
+            width: 100%;
+            align-items: flex-start;
+        }
+
+        .editor-pane {
+            background: #1a1a1a;
+            border: 3px solid #333333;
+            padding: 25px;
+            flex: 1;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+
+        /* Live Preview Book */
+        .preview-pane {
+            width: 380px;
+            background: #472611;
+            border: 4px solid #241107;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .page {
+            background: #c8b693;
+            border: 3px solid #8e7b57;
+            padding: 20px;
+            min-height: 420px;
+            color: #2b251b;
+        }
+
+        .preview-title { font-size: 14px; font-weight: bold; border-bottom: 2px solid #8e7b57; padding-bottom: 6px; margin-bottom: 8px; text-align: center; }
+        .preview-ver { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
+        .preview-date { font-size: 10px; color: #64553f; margin-bottom: 12px; display: block; }
+        .preview-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; font-size: 11px; line-height: 1.5; }
+        
+        .ink-tag { font-size: 10px; font-weight: bold; margin-right: 4px; }
+        .ink-add { color: #1e7025; }
+        .ink-fix { color: #174ea6; }
+        .ink-change { color: #a36200; }
+        .ink-remove { color: #a81c1c; }
+
+        /* Form elements */
+        .input-group { margin-bottom: 14px; }
+        label { display: block; color: #888; font-size: 11px; margin-bottom: 5px; }
 
         input, select {
             width: 100%;
-            background: #0f0f0f;
+            background: #0d0d0d;
             border: 2px solid #333;
             color: #fff;
-            padding: 10px;
+            padding: 8px 10px;
             font-size: 12px;
             outline: none;
         }
         input:focus { border-color: #55ff55; }
 
+        .item-row { display: flex; gap: 8px; margin-bottom: 8px; }
+
         .btn {
             background: #333;
             border: 2px solid #000;
             color: #fff;
-            padding: 10px 18px;
+            padding: 8px 14px;
             cursor: pointer;
             box-shadow: inset 1px 1px 0px #555;
-            font-size: 12px;
+            font-size: 11px;
         }
         .btn:hover { background: #444; }
         .btn-green { background: #275e21; color: #a5ffa0; }
         .btn-green:hover { background: #32752b; }
         .btn-red { background: #691c1c; color: #ffa8a8; }
+        .btn-red:hover { background: #822222; }
 
-        .item-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        .version-selector-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="box">
-        <!-- 1. AUTH SCREEN -->
-        <div id="auth-panel">
-            <h2 id="auth-title">Checking System...</h2>
-            <div class="input-group">
-                <label>Admin Username</label>
-                <input type="text" id="auth-user" placeholder="Username">
-            </div>
-            <div class="input-group">
-                <label>Password</label>
-                <input type="password" id="auth-pass" placeholder="Password">
-            </div>
-            <button class="btn btn-green" id="auth-btn" onclick="submitAuth()">Submit</button>
-            <p id="auth-msg" style="color: #ff5555; font-size: 11px; margin-top: 12px;"></p>
+    <!-- AUTH PANEL -->
+    <div class="auth-card" id="auth-panel">
+        <h2 id="auth-title" style="color: #55ff55; margin-bottom: 15px; font-size: 16px;">Checking system...</h2>
+        <div class="input-group">
+            <label>Admin Username</label>
+            <input type="text" id="auth-user" placeholder="Username">
         </div>
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="auth-pass" placeholder="Password">
+        </div>
+        <button class="btn btn-green" id="auth-btn" onclick="submitAuth()">Submit</button>
+        <p id="auth-msg" style="color: #ff5555; font-size: 11px; margin-top: 12px;"></p>
+    </div>
 
-        <!-- 2. EDITOR SCREEN (Hidden until logged in) -->
-        <div id="editor-panel" style="display: none;">
-            <h2>Server Changelog Publisher</h2>
+    <!-- MAIN DASHBOARD -->
+    <div class="dashboard" id="dash-panel">
+        
+        <!-- LEFT: CONTROLS & EDITOR -->
+        <div class="editor-pane">
+            <div class="version-selector-bar">
+                <select id="version-select" onchange="loadSelectedVersion()">
+                    <!-- Populated dynamically -->
+                </select>
+                <button class="btn btn-green" onclick="createNewVersion()">+ New</button>
+                <button class="btn btn-red" onclick="deleteVersion()">Delete</button>
+            </div>
+
             <div class="input-group">
                 <label>Version Title</label>
-                <input type="text" id="edit-version" placeholder="e.g. v2.0 - Core Revamp">
+                <input type="text" id="edit-ver" oninput="updateLivePreview()" placeholder="e.g. v2.0 - Core Revamp">
             </div>
+
             <div class="input-group">
                 <label>Date (DD/MM/YY)</label>
-                <input type="text" id="edit-date">
+                <input type="text" id="edit-date" oninput="updateLivePreview()">
             </div>
+
             <div class="input-group">
-                <label>Changes</label>
-                <div id="items-list"></div>
-                <button class="btn" onclick="addRow()" style="margin-top: 6px;">+ Add Line</button>
+                <label>Changes List</label>
+                <div id="items-container"></div>
+                <button class="btn" onclick="addChangeRow()" style="margin-top: 5px;">+ Add Line</button>
             </div>
+
             <div style="margin-top: 25px; display: flex; gap: 10px;">
-                <button class="btn btn-green" onclick="publishUpdate()">Publish to GitHub</button>
+                <button class="btn btn-green" onclick="publishAllToGitHub()">Publish All to GitHub</button>
                 <button class="btn btn-red" onclick="logout()">Logout</button>
             </div>
-            <p id="publish-msg" style="font-size: 11px; margin-top: 12px;"></p>
+            <p id="dash-msg" style="font-size: 11px; margin-top: 12px;"></p>
         </div>
+
+        <!-- RIGHT: LIVE BOOK PREVIEW -->
+        <div class="preview-pane">
+            <div class="page">
+                <div class="preview-title">Live Preview</div>
+                <div class="preview-ver" id="prev-ver">v0.0</div>
+                <span class="preview-date" id="prev-date">00/00/00</span>
+                <ul class="preview-list" id="prev-list"></ul>
+            </div>
+        </div>
+
     </div>
 
     <script>
+        let allPages = [];
+        let currentIndex = 0;
         let isRegistered = false;
         let token = localStorage.getItem("mc_admin_token");
 
-        // Set default date to DD/MM/YY
-        const now = new Date();
-        const dd = String(now.getDate()).padStart(2, '0');
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const yy = String(now.getFullYear()).slice(-2);
-        document.getElementById('edit-date').value = `${dd}/${mm}/${yy}`;
+        // Format DD/MM/YY
+        function getTodayDDMMYY() {
+            const now = new Date();
+            return `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getFullYear()).slice(-2)}`;
+        }
 
-        async function checkStatus() {
+        async function initAuth() {
             if (token) {
-                showEditor();
+                showDashboard();
                 return;
             }
+
             const res = await fetch('/api/auth/status');
             const data = await res.json();
             isRegistered = data.isRegistered;
@@ -125,14 +207,14 @@
                 document.getElementById('auth-title').innerText = "Admin Login";
                 document.getElementById('auth-btn').innerText = "Login";
             } else {
-                document.getElementById('auth-title').innerText = "Initial Setup: Create Admin Account";
-                document.getElementById('auth-btn').innerText = "Register (Locks forever)";
+                document.getElementById('auth-title').innerText = "Create 1 Admin Account (Locked Forever)";
+                document.getElementById('auth-btn').innerText = "Register Account";
             }
         }
 
         async function submitAuth() {
-            const user = document.getElementById('auth-user').value;
-            const pass = document.getElementById('auth-pass').value;
+            const user = document.getElementById('auth-user').value.trim();
+            const pass = document.getElementById('auth-pass').value.trim();
             const endpoint = isRegistered ? '/api/auth/login' : '/api/auth/register';
 
             const res = await fetch(endpoint, {
@@ -144,87 +226,141 @@
 
             if (data.success) {
                 if (!isRegistered) {
-                    alert("Account registered! Signups are now locked forever. Please log in.");
+                    alert("Account registered and locked permanently into GitHub! Now log in.");
                     location.reload();
                 } else {
                     localStorage.setItem("mc_admin_token", data.token);
                     token = data.token;
-                    showEditor();
+                    showDashboard();
                 }
             } else {
                 document.getElementById('auth-msg').innerText = data.error;
             }
         }
 
-        function showEditor() {
-            document.getElementById('auth-panel').style.display = "none";
-            document.getElementById('editor-panel').style.display = "block";
-            addRow();
+        async function showDashboard() {
+            document.getElementById('auth-panel').style.display = 'none';
+            document.getElementById('dash-panel').style.display = 'flex';
+
+            // Load existing updates
+            const res = await fetch('/api/changelog');
+            allPages = await res.json();
+
+            if (!allPages || allPages.length === 0) {
+                createNewVersion();
+            } else {
+                populateVersionDropdown();
+                loadSelectedVersion();
+            }
         }
 
-        function addRow() {
-            const list = document.getElementById('items-list');
-            const div = document.createElement('div');
-            div.className = 'item-row';
-            div.innerHTML = `
-                <select style="width: 100px;">
-                    <option value="ink-add">[ADD]</option>
-                    <option value="ink-fix">[FIX]</option>
-                    <option value="ink-change">[CHANGE]</option>
-                    <option value="ink-remove">[REMOVE]</option>
+        function populateVersionDropdown() {
+            const select = document.getElementById('version-select');
+            select.innerHTML = allPages.map((p, i) => `<option value="${i}">${p.version} (${p.date})</option>`).join('');
+            select.value = currentIndex;
+        }
+
+        function loadSelectedVersion() {
+            currentIndex = parseInt(document.getElementById('version-select').value);
+            const page = allPages[currentIndex];
+            document.getElementById('edit-ver').value = page.version;
+            document.getElementById('edit-date').value = page.date;
+
+            const container = document.getElementById('items-container');
+            container.innerHTML = '';
+            page.changes.forEach(c => addChangeRow(c.tag, c.type, c.text));
+
+            updateLivePreview();
+        }
+
+        function createNewVersion() {
+            const newPage = {
+                version: "v" + (allPages.length + 1) + ".0 - New Update",
+                date: getTodayDDMMYY(),
+                changes: [{ tag: "ADD", type: "ink-add", text: "New feature added." }]
+            };
+            allPages.unshift(newPage);
+            currentIndex = 0;
+            populateVersionDropdown();
+            loadSelectedVersion();
+        }
+
+        function deleteVersion() {
+            if (allPages.length <= 1) return alert("You must have at least one update!");
+            if (confirm(`Delete ${allPages[currentIndex].version}?`)) {
+                allPages.splice(currentIndex, 1);
+                currentIndex = 0;
+                populateVersionDropdown();
+                loadSelectedVersion();
+            }
+        }
+
+        function addChangeRow(tag = "ADD", type = "ink-add", text = "") {
+            const container = document.getElementById('items-container');
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            row.innerHTML = `
+                <select style="width: 105px;" onchange="updateLivePreview()">
+                    <option value="ink-add" ${type === 'ink-add' ? 'selected' : ''}>[ADD]</option>
+                    <option value="ink-fix" ${type === 'ink-fix' ? 'selected' : ''}>[FIX]</option>
+                    <option value="ink-change" ${type === 'ink-change' ? 'selected' : ''}>[CHANGE]</option>
+                    <option value="ink-remove" ${type === 'ink-remove' ? 'selected' : ''}>[REMOVE]</option>
                 </select>
-                <input type="text" placeholder="Change description..." class="line-text">
-                <button class="btn btn-red" onclick="this.parentElement.remove()">X</button>
+                <input type="text" placeholder="Change description..." value="${text}" oninput="updateLivePreview()" class="row-text">
+                <button class="btn btn-red" onclick="this.parentElement.remove(); updateLivePreview();">X</button>
             `;
-            list.appendChild(div);
+            container.appendChild(row);
+            updateLivePreview();
         }
 
-        async function publishUpdate() {
-            const version = document.getElementById('edit-version').value.trim();
-            const date = document.getElementById('edit-date').value.trim();
-            if (!version || !date) return alert("Version and date required!");
+        function updateLivePreview() {
+            const ver = document.getElementById('edit-ver').value;
+            const date = document.getElementById('edit-date').value;
+
+            document.getElementById('prev-ver').innerText = ver || "Untitled Version";
+            document.getElementById('prev-date').innerText = date || "00/00/00";
 
             const rows = document.querySelectorAll('.item-row');
             const changes = [];
+            const listEl = document.getElementById('prev-list');
+            listEl.innerHTML = '';
+
             rows.forEach(r => {
                 const sel = r.querySelector('select');
-                const txt = r.querySelector('.line-text').value.trim();
-                if (txt) {
-                    changes.push({
-                        tag: sel.options[sel.selectedIndex].text.replace(/[\[\]]/g, ''),
-                        type: sel.value,
-                        text: txt
-                    });
-                }
+                const txt = r.querySelector('.row-text').value;
+                const tag = sel.options[sel.selectedIndex].text.replace(/[\[\]]/g, '');
+                changes.push({ tag, type: sel.value, text: txt });
+
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="ink-tag ${sel.value}">[${tag}]</span> ${txt || "..."}`;
+                listEl.appendChild(li);
             });
 
-            if (changes.length === 0) return alert("Add at least 1 change line!");
+            // Update current page in memory
+            if (allPages[currentIndex]) {
+                allPages[currentIndex] = { version: ver, date, changes };
+                document.getElementById('version-select').options[currentIndex].text = `${ver} (${date})`;
+            }
+        }
 
-            const msgEl = document.getElementById('publish-msg');
-            msgEl.style.color = "#55ffff";
-            msgEl.innerText = "Committing to GitHub...";
+        async function publishAllToGitHub() {
+            const msg = document.getElementById('dash-msg');
+            msg.style.color = '#55ffff';
+            msg.innerText = "Committing directly to GitHub Pages...";
 
-            // First, fetch current changelog to prepend new update
-            const repoOwner = "YOUR_GITHUB_USER"; // injected or fetched
-            const repoName = "YOUR_REPO_NAME";
-
-            // Save via Render backend
             const res = await fetch('/api/save-changelog', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    token: token,
-                    data: [{ version, date, changes }] // backend can append/prepend
-                })
+                body: JSON.stringify({ token, data: allPages })
             });
 
             const resData = await res.json();
             if (resData.success) {
-                msgEl.style.color = "#55ff55";
-                msgEl.innerText = "Published! Players can now see it on your GitHub site.";
+                msg.style.color = '#55ff55';
+                msg.innerText = "Successfully published! Players can now see it on GitHub.";
             } else {
-                msgEl.style.color = "#ff5555";
-                msgEl.innerText = resData.error;
+                msg.style.color = '#ff5555';
+                msg.innerText = resData.error;
             }
         }
 
@@ -233,7 +369,7 @@
             location.reload();
         }
 
-        checkStatus();
+        initAuth();
     </script>
 </body>
 </html>
