@@ -1,0 +1,10 @@
+[
+  {
+    "version": "v2.0 — Skript Overhaul",
+    "date": "24/10/24",
+    "changes": [
+      { "tag": "ADD", "type": "ink-add", "text": "Overhauling 15+ custom Skripts." },
+      { "tag": "CHANGE", "type": "ink-change", "text": "Installed SkBee for faster performance." }
+    ]
+  }
+]
