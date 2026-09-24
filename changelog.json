@@ -1,10 +1,30 @@
 {
   "announcement": {
     "enabled": true,
-    "type": "online",
-    "message": "Server is currently up!"
+    "type": "maintenance",
+    "message": "Schedule maintenance on 9/26/26"
   },
   "updates": [
+    {
+      "version": "The patch that nobody cared about (V.1.21.20)",
+      "date": "9/24/26",
+      "changes": [
+        {
+          "type": "separator",
+          "text": "NEW GAMEMODES"
+        },
+        {
+          "tag": "ADD",
+          "type": "ink-add",
+          "text": "Boat racing"
+        },
+        {
+          "tag": "ADD",
+          "type": "ink-add",
+          "text": "Build battles"
+        }
+      ]
+    },
     {
       "version": "NOT Friday Update ig (V1.19.2)",
       "date": "9/24/26",
