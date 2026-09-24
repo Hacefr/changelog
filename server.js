@@ -1,105 +1,156 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
 const crypto = require('crypto');
+const path = require('path');
 const { Octokit } = require("@octokit/rest");
 
 const app = express();
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
-const DATA_FILE = path.join(__dirname, 'admin_account.json');
-
-// GitHub Config from Render Environment Variables
-const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+// Render Environment Variables
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const REPO_OWNER = process.env.REPO_OWNER;
 const REPO_NAME = process.env.REPO_NAME;
 
-// Simple password hashing helper
+const octokit = new Octokit({ auth: GITHUB_TOKEN });
+
 function hashPassword(pass) {
-    return crypto.createHash('sha256').update(pass).digest('hex');
+    return crypto.createHash('sha256').update(pass + "mc_secret_salt").digest('hex');
 }
 
-// 1. Check if the 1-and-only account already exists
-app.get('/api/auth/status', (req, res) => {
-    const exists = fs.existsSync(DATA_FILE);
-    res.json({ isRegistered: exists });
+// 1. Check if the 1 admin account exists on GitHub
+app.get('/api/auth/status', async (req, res) => {
+    try {
+        await octokit.repos.getContent({
+            owner: REPO_OWNER,
+            repo: REPO_NAME,
+            path: '.admin_lock.json',
+        });
+        res.json({ isRegistered: true });
+    } catch (err) {
+        // 404 means the file doesn't exist yet -> Registration is open
+        res.json({ isRegistered: false });
+    }
 });
 
-// 2. ONE-TIME SIGNUP (Self-destructs after 1 use)
-app.post('/api/auth/register', (req, res) => {
-    if (fs.existsSync(DATA_FILE)) {
-        return res.status(403).json({ error: "Registration is permanently closed!" });
-    }
-
+// 2. Register the 1-time account (Saved to GitHub -> immune to Render resets)
+app.post('/api/auth/register', async (req, res) => {
     const { username, password } = req.body;
-    if (!username || !password) {
-        return res.status(400).json({ error: "Username and password required!" });
-    }
-
-    const accountData = {
-        username: username.trim(),
-        passwordHash: hashPassword(password)
-    };
-
-    // Save account to disk — permanently kills future signups
-    fs.writeFileSync(DATA_FILE, JSON.stringify(accountData));
-    res.json({ success: true, message: "Admin account registered and locked!" });
-});
-
-// 3. LOGIN
-app.post('/api/auth/login', (req, res) => {
-    if (!fs.existsSync(DATA_FILE)) {
-        return res.status(400).json({ error: "No admin account registered yet!" });
-    }
-
-    const { username, password } = req.body;
-    const account = JSON.parse(fs.readFileSync(DATA_FILE));
-
-    if (account.username === username.trim() && account.passwordHash === hashPassword(password)) {
-        // Return a simple session token
-        const token = hashPassword(account.username + account.passwordHash);
-        res.json({ success: true, token });
-    } else {
-        res.status(401).json({ error: "Invalid credentials!" });
-    }
-});
-
-// 4. PUBLISH TO GITHUB
-app.post('/api/save-changelog', async (req, res) => {
-    const { token, data } = req.body;
-
-    if (!fs.existsSync(DATA_FILE)) return res.status(401).json({ error: "Unauthorized" });
-    const account = JSON.parse(fs.readFileSync(DATA_FILE));
-    const validToken = hashPassword(account.username + account.passwordHash);
-
-    if (token !== validToken) {
-        return res.status(403).json({ error: "Session expired or invalid. Log in again." });
-    }
+    if (!username || !password) return res.status(400).json({ error: "Missing fields!" });
 
     try {
-        // Fetch existing changelog.json SHA from GitHub
+        // Double check it doesn't already exist
+        try {
+            await octokit.repos.getContent({ owner: REPO_OWNER, repo: REPO_NAME, path: '.admin_lock.json' });
+            return res.status(403).json({ error: "Admin already registered and locked!" });
+        } catch (e) { /* File doesn't exist, proceed */ }
+
+        const lockData = {
+            username: username.trim(),
+            passwordHash: hashPassword(password)
+        };
+
+        await octokit.repos.createOrUpdateFileContents({
+            owner: REPO_OWNER,
+            repo: REPO_NAME,
+            path: '.admin_lock.json',
+            message: "Lock admin registration [skip ci]",
+            content: Buffer.from(JSON.stringify(lockData)).toString('base64')
+        });
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: "GitHub API Error: " + err.message });
+    }
+});
+
+// 3. Login
+app.post('/api/auth/login', async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+        const { data: fileData } = await octokit.repos.getContent({
+            owner: REPO_OWNER,
+            repo: REPO_NAME,
+            path: '.admin_lock.json',
+        });
+
+        const raw = Buffer.from(fileData.content, 'base64').toString('utf8');
+        const lock = JSON.parse(raw);
+
+        if (lock.username === username.trim() && lock.passwordHash === hashPassword(password)) {
+            const token = hashPassword(lock.username + lock.passwordHash);
+            res.json({ success: true, token });
+        } else {
+            res.status(401).json({ error: "Invalid username or password!" });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Could not read admin lock: " + err.message });
+    }
+});
+
+// 4. Fetch full changelog for editing
+app.get('/api/changelog', async (req, res) => {
+    try {
         const { data: fileData } = await octokit.repos.getContent({
             owner: REPO_OWNER,
             repo: REPO_NAME,
             path: 'changelog.json',
         });
+        const raw = Buffer.from(fileData.content, 'base64').toString('utf8');
+        res.json(JSON.parse(raw));
+    } catch (err) {
+        res.json([]);
+    }
+});
 
-        // Push update directly to GitHub repository
+// 5. Save/Publish all changelogs to GitHub
+app.post('/api/save-changelog', async (req, res) => {
+    const { token, data } = req.body;
+
+    try {
+        // Verify Session Token
+        const { data: lockFileData } = await octokit.repos.getContent({
+            owner: REPO_OWNER,
+            repo: REPO_NAME,
+            path: '.admin_lock.json',
+        });
+        const lock = JSON.parse(Buffer.from(lockFileData.content, 'base64').toString('utf8'));
+        const validToken = hashPassword(lock.username + lock.passwordHash);
+
+        if (token !== validToken) {
+            return res.status(403).json({ error: "Session invalid. Log in again." });
+        }
+
+        // Fetch SHA of changelog.json to update it
+        let sha = null;
+        try {
+            const { data: currentFile } = await octokit.repos.getContent({
+                owner: REPO_OWNER,
+                repo: REPO_NAME,
+                path: 'changelog.json',
+            });
+            sha = currentFile.sha;
+        } catch (e) { /* File doesn't exist yet */ }
+
         await octokit.repos.createOrUpdateFileContents({
             owner: REPO_OWNER,
             repo: REPO_NAME,
             path: 'changelog.json',
-            message: `Update changelog via Book Editor [skip ci]`,
+            message: `Publish changelog update [skip ci]`,
             content: Buffer.from(JSON.stringify(data, null, 2)).toString('base64'),
-            sha: fileData.sha,
+            sha: sha || undefined
         });
 
-        res.json({ success: true, message: "Successfully pushed to GitHub!" });
+        res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: "GitHub Push Failed: " + err.message });
     }
 });
 
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Editor active on port ${PORT}`));
+app.listen(PORT, () => console.log(`Editor live on port ${PORT}`));
