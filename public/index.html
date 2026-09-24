@@ -1,1 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Changelog Admin Portal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/South-Paw/typeface-minecraft@master/index.css">
 
+    <style>
+        * { box-sizing: border-box; font-family: 'Minecraft', monospace; }
+        body {
+            background-color: #12100e;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .box {
+            background: #1e1e1e;
+            border: 3px solid #3f3f3f;
+            padding: 30px;
+            max-width: 550px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+
+        h2 { color: #55ff55; margin-bottom: 20px; font-size: 18px; text-shadow: 1px 1px #000; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; color: #888; font-size: 11px; margin-bottom: 6px; }
+
+        input, select {
+            width: 100%;
+            background: #0f0f0f;
+            border: 2px solid #333;
+            color: #fff;
+            padding: 10px;
+            font-size: 12px;
+            outline: none;
+        }
+        input:focus { border-color: #55ff55; }
+
+        .btn {
+            background: #333;
+            border: 2px solid #000;
+            color: #fff;
+            padding: 10px 18px;
+            cursor: pointer;
+            box-shadow: inset 1px 1px 0px #555;
+            font-size: 12px;
+        }
+        .btn:hover { background: #444; }
+        .btn-green { background: #275e21; color: #a5ffa0; }
+        .btn-green:hover { background: #32752b; }
+        .btn-red { background: #691c1c; color: #ffa8a8; }
+
+        .item-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <!-- 1. AUTH SCREEN -->
+        <div id="auth-panel">
+            <h2 id="auth-title">Checking System...</h2>
+            <div class="input-group">
+                <label>Admin Username</label>
+                <input type="text" id="auth-user" placeholder="Username">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="auth-pass" placeholder="Password">
+            </div>
+            <button class="btn btn-green" id="auth-btn" onclick="submitAuth()">Submit</button>
+            <p id="auth-msg" style="color: #ff5555; font-size: 11px; margin-top: 12px;"></p>
+        </div>
+
+        <!-- 2. EDITOR SCREEN (Hidden until logged in) -->
+        <div id="editor-panel" style="display: none;">
+            <h2>Server Changelog Publisher</h2>
+            <div class="input-group">
+                <label>Version Title</label>
+                <input type="text" id="edit-version" placeholder="e.g. v2.0 - Core Revamp">
+            </div>
+            <div class="input-group">
+                <label>Date (DD/MM/YY)</label>
+                <input type="text" id="edit-date">
+            </div>
+            <div class="input-group">
+                <label>Changes</label>
+                <div id="items-list"></div>
+                <button class="btn" onclick="addRow()" style="margin-top: 6px;">+ Add Line</button>
+            </div>
+            <div style="margin-top: 25px; display: flex; gap: 10px;">
+                <button class="btn btn-green" onclick="publishUpdate()">Publish to GitHub</button>
+                <button class="btn btn-red" onclick="logout()">Logout</button>
+            </div>
+            <p id="publish-msg" style="font-size: 11px; margin-top: 12px;"></p>
+        </div>
+    </div>
+
+    <script>
+        let isRegistered = false;
+        let token = localStorage.getItem("mc_admin_token");
+
+        // Set default date to DD/MM/YY
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yy = String(now.getFullYear()).slice(-2);
+        document.getElementById('edit-date').value = `${dd}/${mm}/${yy}`;
+
+        async function checkStatus() {
+            if (token) {
+                showEditor();
+                return;
+            }
+            const res = await fetch('/api/auth/status');
+            const data = await res.json();
+            isRegistered = data.isRegistered;
+
+            if (isRegistered) {
+                document.getElementById('auth-title').innerText = "Admin Login";
+                document.getElementById('auth-btn').innerText = "Login";
+            } else {
+                document.getElementById('auth-title').innerText = "Initial Setup: Create Admin Account";
+                document.getElementById('auth-btn').innerText = "Register (Locks forever)";
+            }
+        }
+
+        async function submitAuth() {
+            const user = document.getElementById('auth-user').value;
+            const pass = document.getElementById('auth-pass').value;
+            const endpoint = isRegistered ? '/api/auth/login' : '/api/auth/register';
+
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user, password: pass })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                if (!isRegistered) {
+                    alert("Account registered! Signups are now locked forever. Please log in.");
+                    location.reload();
+                } else {
+                    localStorage.setItem("mc_admin_token", data.token);
+                    token = data.token;
+                    showEditor();
+                }
+            } else {
+                document.getElementById('auth-msg').innerText = data.error;
+            }
+        }
+
+        function showEditor() {
+            document.getElementById('auth-panel').style.display = "none";
+            document.getElementById('editor-panel').style.display = "block";
+            addRow();
+        }
+
+        function addRow() {
+            const list = document.getElementById('items-list');
+            const div = document.createElement('div');
+            div.className = 'item-row';
+            div.innerHTML = `
+                <select style="width: 100px;">
+                    <option value="ink-add">[ADD]</option>
+                    <option value="ink-fix">[FIX]</option>
+                    <option value="ink-change">[CHANGE]</option>
+                    <option value="ink-remove">[REMOVE]</option>
+                </select>
+                <input type="text" placeholder="Change description..." class="line-text">
+                <button class="btn btn-red" onclick="this.parentElement.remove()">X</button>
+            `;
+            list.appendChild(div);
+        }
+
+        async function publishUpdate() {
+            const version = document.getElementById('edit-version').value.trim();
+            const date = document.getElementById('edit-date').value.trim();
+            if (!version || !date) return alert("Version and date required!");
+
+            const rows = document.querySelectorAll('.item-row');
+            const changes = [];
+            rows.forEach(r => {
+                const sel = r.querySelector('select');
+                const txt = r.querySelector('.line-text').value.trim();
+                if (txt) {
+                    changes.push({
+                        tag: sel.options[sel.selectedIndex].text.replace(/[\[\]]/g, ''),
+                        type: sel.value,
+                        text: txt
+                    });
+                }
+            });
+
+            if (changes.length === 0) return alert("Add at least 1 change line!");
+
+            const msgEl = document.getElementById('publish-msg');
+            msgEl.style.color = "#55ffff";
+            msgEl.innerText = "Committing to GitHub...";
+
+            // First, fetch current changelog to prepend new update
+            const repoOwner = "YOUR_GITHUB_USER"; // injected or fetched
+            const repoName = "YOUR_REPO_NAME";
+
+            // Save via Render backend
+            const res = await fetch('/api/save-changelog', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token: token,
+                    data: [{ version, date, changes }] // backend can append/prepend
+                })
+            });
+
+            const resData = await res.json();
+            if (resData.success) {
+                msgEl.style.color = "#55ff55";
+                msgEl.innerText = "Published! Players can now see it on your GitHub site.";
+            } else {
+                msgEl.style.color = "#ff5555";
+                msgEl.innerText = resData.error;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("mc_admin_token");
+            location.reload();
+        }
+
+        checkStatus();
+    </script>
+</body>
+</html>
