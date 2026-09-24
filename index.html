@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Server Changelog — Library</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/South-Paw/typeface-minecraft@master/index.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Minecraft', monospace;
+            -webkit-font-smoothing: none;
+            -moz-osx-font-smoothing: none;
+            user-select: none;
+        }
+
+        body {
+            background-color: #12100e;
+            background-image: 
+                radial-gradient(#1e1a16 15%, transparent 16%),
+                radial-gradient(#1e1a16 15%, transparent 16%);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .workspace {
+            display: flex;
+            gap: 25px;
+            max-width: 900px;
+            width: 100%;
+            align-items: stretch;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Leather Book */
+        .book-container {
+            background: #472611;
+            border: 4px solid #241107;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 2px 2px 0px #6d3d1d, inset -2px -2px 0px #1a0c04;
+            padding: 12px;
+            border-radius: 6px;
+            flex: 1;
+            min-width: 320px;
+            max-width: 480px;
+        }
+
+        .page {
+            background: #c8b693;
+            border: 3px solid #8e7b57;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.15);
+            padding: 25px 20px;
+            min-height: 480px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .book-title {
+            text-align: center;
+            color: #3f3627;
+            font-size: 16px;
+            border-bottom: 2px solid #8e7b57;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .page-content {
+            flex-grow: 1;
+            color: #2b251b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .update-version { font-size: 15px; color: #1f1a13; font-weight: bold; margin-bottom: 4px; }
+        .update-date { font-size: 11px; color: #64553f; margin-bottom: 14px; display: block; }
+
+        .change-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .change-list li {
+            position: relative;
+            padding-left: 14px;
+        }
+
+        .change-list li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #55442e;
+        }
+
+        .ink-tag { font-size: 11px; font-weight: bold; display: inline-block; margin-right: 4px; }
+        .ink-add { color: #1e7025; }
+        .ink-fix { color: #174ea6; }
+        .ink-change { color: #a36200; }
+        .ink-remove { color: #a81c1c; }
+
+        .book-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            border-top: 2px dashed #a4916c;
+            padding-top: 12px;
+        }
+
+        .nav-btn {
+            background: #8e7b57;
+            border: 2px solid #3f3627;
+            color: #fff;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 11px;
+            box-shadow: inset 1px 1px 0px #b4a37f, inset -1px -1px 0px #5c4e33;
+        }
+        .nav-btn:hover:not(:disabled) { background: #9d8962; }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .page-counter { font-size: 11px; color: #64553f; }
+
+        /* Bookshelf */
+        .library-container {
+            background: #2b180d;
+            border: 4px solid #140b06;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 2px 2px 0px #4d2b17, inset -2px -2px 0px #0a0503;
+            border-radius: 6px;
+            width: 320px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .library-header {
+            color: #e5c38c;
+            font-size: 15px;
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #140b06;
+            text-transform: uppercase;
+            text-shadow: 1px 1px #000;
+        }
+
+        .library-shelf {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            max-height: 430px;
+            padding-right: 4px;
+        }
+
+        .shelf-book {
+            background: #6e3319;
+            border: 2px solid #000;
+            padding: 10px 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: inset 1px 1px 0px #9b4b27, inset -1px -1px 0px #381a0d;
+            transition: all 0.1s ease;
+        }
+        .shelf-book:hover { background: #884020; transform: translateX(-4px); }
+        .shelf-book.active {
+            background: #395c2b;
+            border-color: #55ff55;
+            box-shadow: inset 1px 1px 0px #558b40, inset -1px -1px 0px #1d3016;
+        }
+        .shelf-book-title { color: #ffffff; font-size: 12px; text-shadow: 1px 1px #000; }
+        .shelf-book-date { color: #d1b899; font-size: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="workspace">
+        <div class="book-container">
+            <div class="page">
+                <div>
+                    <div class="book-title">Server Logbook</div>
+                    <div class="page-content" id="page-content">Loading library...</div>
+                </div>
+
+                <div class="book-footer">
+                    <button class="nav-btn" id="prev-btn" onclick="turnPage(-1)">&#9664; Prev</button>
+                    <span class="page-counter" id="page-counter">Page 1 of 1</span>
+                    <button class="nav-btn" id="next-btn" onclick="turnPage(1)">Next &#9654;</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="library-container">
+            <div class="library-header">&#128218; Library Archive</div>
+            <div class="library-shelf" id="library-shelf"></div>
+        </div>
+    </div>
+
+    <script>
+        let changelogPages = [];
+        let currentPage = 0;
+
+        // Fetch live changelog from GitHub repo
+        fetch('changelog.json')
+            .then(res => res.json())
+            .then(data => {
+                changelogPages = data;
+                renderPage();
+            })
+            .catch(err => {
+                document.getElementById('page-content').innerHTML = "Could not load changelog.";
+            });
+
+        function renderShelf() {
+            const shelfEl = document.getElementById("library-shelf");
+            shelfEl.innerHTML = changelogPages.map((page, idx) => `
+                <div class="shelf-book ${idx === currentPage ? 'active' : ''}" onclick="selectPage(${idx})">
+                    <span class="shelf-book-title">&#128214; ${page.version}</span>
+                    <span class="shelf-book-date">${page.date}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderPage() {
+            if (changelogPages.length === 0) return;
+            const pageData = changelogPages[currentPage];
+            const contentEl = document.getElementById("page-content");
+            const counterEl = document.getElementById("page-counter");
+            const prevBtn = document.getElementById("prev-btn");
+            const nextBtn = document.getElementById("next-btn");
+
+            let changesHtml = pageData.changes.map(c => 
+                `<li><span class="ink-tag ${c.type}">[${c.tag}]</span> ${c.text}</li>`
+            ).join('');
+
+            contentEl.innerHTML = `
+                <div class="update-version">${pageData.version}</div>
+                <span class="update-date">${pageData.date}</span>
+                <ul class="change-list">${changesHtml}</ul>
+            `;
+
+            counterEl.innerText = `Page ${currentPage + 1} of ${changelogPages.length}`;
+            prevBtn.disabled = currentPage === 0;
+            nextBtn.disabled = currentPage === changelogPages.length - 1;
+
+            renderShelf();
+        }
+
+        function turnPage(delta) {
+            currentPage += delta;
+            renderPage();
+        }
+
+        function selectPage(index) {
+            currentPage = index;
+            renderPage();
+        }
+    </script>
+</body>
+</html>
