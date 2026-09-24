@@ -19,7 +19,6 @@
             padding: 20px;
         }
 
-        /* Login Card */
         .auth-card {
             background: #1e1e1e;
             border: 3px solid #3f3f3f;
@@ -29,11 +28,10 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.8);
         }
 
-        /* Dashboard (Editor + Preview side-by-side) */
         .dashboard {
             display: none;
-            gap: 30px;
-            max-width: 1050px;
+            gap: 25px;
+            max-width: 1100px;
             width: 100%;
             align-items: flex-start;
         }
@@ -41,7 +39,7 @@
         .editor-pane {
             background: #1a1a1a;
             border: 3px solid #333333;
-            padding: 25px;
+            padding: 22px;
             flex: 1;
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
@@ -60,26 +58,27 @@
             background: #c8b693;
             border: 3px solid #8e7b57;
             padding: 20px;
-            min-height: 420px;
+            min-height: 480px;
             color: #2b251b;
         }
 
-        .preview-title { font-size: 14px; font-weight: bold; border-bottom: 2px solid #8e7b57; padding-bottom: 6px; margin-bottom: 8px; text-align: center; }
+        .preview-title { font-size: 13px; font-weight: bold; border-bottom: 2px solid #8e7b57; padding-bottom: 5px; margin-bottom: 8px; text-align: center; }
         .preview-ver { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
         .preview-date { font-size: 10px; color: #64553f; margin-bottom: 12px; display: block; }
         .preview-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; font-size: 11px; line-height: 1.5; }
         
+        .category-header { color: #5c3b1e; font-size: 11px; font-weight: bold; margin-top: 8px; border-bottom: 1px dashed #8e7b57; padding-bottom: 2px; text-transform: uppercase; }
+
         .ink-tag { font-size: 10px; font-weight: bold; margin-right: 4px; }
         .ink-add { color: #1e7025; }
         .ink-fix { color: #174ea6; }
         .ink-change { color: #a36200; }
         .ink-remove { color: #a81c1c; }
 
-        /* Form elements */
         .input-group { margin-bottom: 14px; }
         label { display: block; color: #888; font-size: 11px; margin-bottom: 5px; }
 
-        input, select {
+        input, select, textarea {
             width: 100%;
             background: #0d0d0d;
             border: 2px solid #333;
@@ -88,15 +87,15 @@
             font-size: 12px;
             outline: none;
         }
-        input:focus { border-color: #55ff55; }
+        input:focus, textarea:focus { border-color: #55ff55; }
 
-        .item-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        .item-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
 
         .btn {
             background: #333;
             border: 2px solid #000;
             color: #fff;
-            padding: 8px 14px;
+            padding: 8px 12px;
             cursor: pointer;
             box-shadow: inset 1px 1px 0px #555;
             font-size: 11px;
@@ -105,14 +104,14 @@
         .btn-green { background: #275e21; color: #a5ffa0; }
         .btn-green:hover { background: #32752b; }
         .btn-red { background: #691c1c; color: #ffa8a8; }
-        .btn-red:hover { background: #822222; }
+        .btn-gold { background: #634316; color: #ffd699; }
 
-        .version-selector-bar {
-            display: flex;
-            gap: 8px;
+        /* Announcement Section */
+        .announcement-box {
+            background: #141414;
+            border: 2px dashed #444;
+            padding: 12px;
             margin-bottom: 20px;
-            border-bottom: 2px solid #333;
-            padding-bottom: 15px;
         }
     </style>
 </head>
@@ -138,17 +137,33 @@
         
         <!-- LEFT: CONTROLS & EDITOR -->
         <div class="editor-pane">
-            <div class="version-selector-bar">
-                <select id="version-select" onchange="loadSelectedVersion()">
-                    <!-- Populated dynamically -->
-                </select>
-                <button class="btn btn-green" onclick="createNewVersion()">+ New</button>
+            
+            <!-- SERVER ANNOUNCEMENT / MAINTENANCE SETTER -->
+            <div class="announcement-box">
+                <label style="color: #ffaa00; font-size: 12px; font-weight: bold; margin-bottom: 8px;">📢 Server Notice / Maintenance Alert</label>
+                <div style="display: flex; gap: 10px; margin-bottom: 8px;">
+                    <select id="ann-enabled" style="width: 140px;">
+                        <option value="false">Banner: Disabled</option>
+                        <option value="true">Banner: Active</option>
+                    </select>
+                    <select id="ann-type" style="width: 140px;">
+                        <option value="maintenance">Maintenance (Red)</option>
+                        <option value="online">Notice (Green)</option>
+                    </select>
+                </div>
+                <input type="text" id="ann-msg" placeholder="e.g. Server is down for updates! Back online in ~30 mins.">
+            </div>
+
+            <!-- VERSION SELECTION -->
+            <div style="display: flex; gap: 8px; margin-bottom: 15px; border-bottom: 2px solid #333; padding-bottom: 12px;">
+                <select id="version-select" onchange="loadSelectedVersion()"></select>
+                <button class="btn btn-green" onclick="createNewVersion()">+ New Update</button>
                 <button class="btn btn-red" onclick="deleteVersion()">Delete</button>
             </div>
 
             <div class="input-group">
                 <label>Version Title</label>
-                <input type="text" id="edit-ver" oninput="updateLivePreview()" placeholder="e.g. v2.0 - Core Revamp">
+                <input type="text" id="edit-ver" oninput="updateLivePreview()" placeholder="e.g. Friday Update (v1.19.2)">
             </div>
 
             <div class="input-group">
@@ -157,9 +172,12 @@
             </div>
 
             <div class="input-group">
-                <label>Changes List</label>
+                <label>Changes & Categories</label>
                 <div id="items-container"></div>
-                <button class="btn" onclick="addChangeRow()" style="margin-top: 5px;">+ Add Line</button>
+                <div style="margin-top: 8px; display: flex; gap: 8px;">
+                    <button class="btn" onclick="addChangeRow('ADD', 'ink-add', '')">+ Add Change</button>
+                    <button class="btn btn-gold" onclick="addSeparatorRow('CATEGORY NAME')">+ Add Section Header</button>
+                </div>
             </div>
 
             <div style="margin-top: 25px; display: flex; gap: 10px;">
@@ -182,12 +200,11 @@
     </div>
 
     <script>
-        let allPages = [];
+        let changelogData = { announcement: { enabled: false, type: "maintenance", message: "" }, updates: [] };
         let currentIndex = 0;
         let isRegistered = false;
         let token = localStorage.getItem("mc_admin_token");
 
-        // Format DD/MM/YY
         function getTodayDDMMYY() {
             const now = new Date();
             return `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getFullYear()).slice(-2)}`;
@@ -207,7 +224,7 @@
                 document.getElementById('auth-title').innerText = "Admin Login";
                 document.getElementById('auth-btn').innerText = "Login";
             } else {
-                document.getElementById('auth-title').innerText = "Create 1 Admin Account (Locked Forever)";
+                document.getElementById('auth-title').innerText = "Create Admin Account";
                 document.getElementById('auth-btn').innerText = "Register Account";
             }
         }
@@ -226,7 +243,7 @@
 
             if (data.success) {
                 if (!isRegistered) {
-                    alert("Account registered and locked permanently into GitHub! Now log in.");
+                    alert("Admin registered! Now log in.");
                     location.reload();
                 } else {
                     localStorage.setItem("mc_admin_token", data.token);
@@ -242,11 +259,25 @@
             document.getElementById('auth-panel').style.display = 'none';
             document.getElementById('dash-panel').style.display = 'flex';
 
-            // Load existing updates
             const res = await fetch('/api/changelog');
-            allPages = await res.json();
+            const raw = await res.json();
 
-            if (!allPages || allPages.length === 0) {
+            // Backward compatibility
+            if (Array.isArray(raw)) {
+                changelogData = {
+                    announcement: { enabled: false, type: "maintenance", message: "" },
+                    updates: raw
+                };
+            } else {
+                changelogData = raw;
+            }
+
+            // Load announcement
+            document.getElementById('ann-enabled').value = String(changelogData.announcement.enabled);
+            document.getElementById('ann-type').value = changelogData.announcement.type;
+            document.getElementById('ann-msg').value = changelogData.announcement.message || "";
+
+            if (!changelogData.updates || changelogData.updates.length === 0) {
                 createNewVersion();
             } else {
                 populateVersionDropdown();
@@ -256,39 +287,48 @@
 
         function populateVersionDropdown() {
             const select = document.getElementById('version-select');
-            select.innerHTML = allPages.map((p, i) => `<option value="${i}">${p.version} (${p.date})</option>`).join('');
+            select.innerHTML = changelogData.updates.map((p, i) => `<option value="${i}">${p.version} (${p.date})</option>`).join('');
             select.value = currentIndex;
         }
 
         function loadSelectedVersion() {
             currentIndex = parseInt(document.getElementById('version-select').value);
-            const page = allPages[currentIndex];
+            const page = changelogData.updates[currentIndex];
             document.getElementById('edit-ver').value = page.version;
             document.getElementById('edit-date').value = page.date;
 
             const container = document.getElementById('items-container');
             container.innerHTML = '';
-            page.changes.forEach(c => addChangeRow(c.tag, c.type, c.text));
+            page.changes.forEach(c => {
+                if (c.type === "separator") {
+                    addSeparatorRow(c.text);
+                } else {
+                    addChangeRow(c.tag, c.type, c.text);
+                }
+            });
 
             updateLivePreview();
         }
 
         function createNewVersion() {
             const newPage = {
-                version: "v" + (allPages.length + 1) + ".0 - New Update",
+                version: "v" + (changelogData.updates.length + 1) + ".0 - New Update",
                 date: getTodayDDMMYY(),
-                changes: [{ tag: "ADD", type: "ink-add", text: "New feature added." }]
+                changes: [
+                    { type: "separator", text: "GENERAL" },
+                    { tag: "ADD", type: "ink-add", text: "New features added." }
+                ]
             };
-            allPages.unshift(newPage);
+            changelogData.updates.unshift(newPage);
             currentIndex = 0;
             populateVersionDropdown();
             loadSelectedVersion();
         }
 
         function deleteVersion() {
-            if (allPages.length <= 1) return alert("You must have at least one update!");
-            if (confirm(`Delete ${allPages[currentIndex].version}?`)) {
-                allPages.splice(currentIndex, 1);
+            if (changelogData.updates.length <= 1) return alert("Must have at least one update!");
+            if (confirm(`Delete ${changelogData.updates[currentIndex].version}?`)) {
+                changelogData.updates.splice(currentIndex, 1);
                 currentIndex = 0;
                 populateVersionDropdown();
                 loadSelectedVersion();
@@ -298,15 +338,28 @@
         function addChangeRow(tag = "ADD", type = "ink-add", text = "") {
             const container = document.getElementById('items-container');
             const row = document.createElement('div');
-            row.className = 'item-row';
+            row.className = 'item-row change-item-row';
             row.innerHTML = `
-                <select style="width: 105px;" onchange="updateLivePreview()">
+                <select style="width: 100px;" onchange="updateLivePreview()">
                     <option value="ink-add" ${type === 'ink-add' ? 'selected' : ''}>[ADD]</option>
                     <option value="ink-fix" ${type === 'ink-fix' ? 'selected' : ''}>[FIX]</option>
                     <option value="ink-change" ${type === 'ink-change' ? 'selected' : ''}>[CHANGE]</option>
                     <option value="ink-remove" ${type === 'ink-remove' ? 'selected' : ''}>[REMOVE]</option>
                 </select>
-                <input type="text" placeholder="Change description..." value="${text}" oninput="updateLivePreview()" class="row-text">
+                <input type="text" placeholder="Description of change..." value="${text}" oninput="updateLivePreview()" class="row-text">
+                <button class="btn btn-red" onclick="this.parentElement.remove(); updateLivePreview();">X</button>
+            `;
+            container.appendChild(row);
+            updateLivePreview();
+        }
+
+        function addSeparatorRow(title = "CATEGORY NAME") {
+            const container = document.getElementById('items-container');
+            const row = document.createElement('div');
+            row.className = 'item-row separator-item-row';
+            row.innerHTML = `
+                <span style="color: #ffaa00; font-size: 11px; width: 100px;">✦ SECTION:</span>
+                <input type="text" placeholder="e.g. GENERATORS, PVP, FIXES" value="${title}" oninput="updateLivePreview()" class="row-separator-text" style="border-color: #ffaa00; color: #ffea88;">
                 <button class="btn btn-red" onclick="this.parentElement.remove(); updateLivePreview();">X</button>
             `;
             container.appendChild(row);
@@ -320,25 +373,32 @@
             document.getElementById('prev-ver').innerText = ver || "Untitled Version";
             document.getElementById('prev-date').innerText = date || "00/00/00";
 
-            const rows = document.querySelectorAll('.item-row');
-            const changes = [];
+            const container = document.getElementById('items-container');
             const listEl = document.getElementById('prev-list');
             listEl.innerHTML = '';
+            const changes = [];
 
-            rows.forEach(r => {
-                const sel = r.querySelector('select');
-                const txt = r.querySelector('.row-text').value;
-                const tag = sel.options[sel.selectedIndex].text.replace(/[\[\]]/g, '');
-                changes.push({ tag, type: sel.value, text: txt });
-
-                const li = document.createElement('li');
-                li.innerHTML = `<span class="ink-tag ${sel.value}">[${tag}]</span> ${txt || "..."}`;
-                listEl.appendChild(li);
+            Array.from(container.children).forEach(r => {
+                if (r.classList.contains('separator-item-row')) {
+                    const txt = r.querySelector('.row-separator-text').value.trim();
+                    changes.push({ type: "separator", text: txt });
+                    const div = document.createElement('div');
+                    div.className = 'category-header';
+                    div.innerText = `✦ ${txt} ✦`;
+                    listEl.appendChild(div);
+                } else if (r.classList.contains('change-item-row')) {
+                    const sel = r.querySelector('select');
+                    const txt = r.querySelector('.row-text').value;
+                    const tag = sel.options[sel.selectedIndex].text.replace(/[\[\]]/g, '');
+                    changes.push({ tag, type: sel.value, text: txt });
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span class="ink-tag ${sel.value}">[${tag}]</span> ${txt || "..."}`;
+                    listEl.appendChild(li);
+                }
             });
 
-            // Update current page in memory
-            if (allPages[currentIndex]) {
-                allPages[currentIndex] = { version: ver, date, changes };
+            if (changelogData.updates[currentIndex]) {
+                changelogData.updates[currentIndex] = { version: ver, date, changes };
                 document.getElementById('version-select').options[currentIndex].text = `${ver} (${date})`;
             }
         }
@@ -346,12 +406,19 @@
         async function publishAllToGitHub() {
             const msg = document.getElementById('dash-msg');
             msg.style.color = '#55ffff';
-            msg.innerText = "Committing directly to GitHub Pages...";
+            msg.innerText = "Publishing directly to GitHub Pages...";
+
+            // Update announcement
+            changelogData.announcement = {
+                enabled: document.getElementById('ann-enabled').value === "true",
+                type: document.getElementById('ann-type').value,
+                message: document.getElementById('ann-msg').value.trim()
+            };
 
             const res = await fetch('/api/save-changelog', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token, data: allPages })
+                body: JSON.stringify({ token, data: changelogData })
             });
 
             const resData = await res.json();
