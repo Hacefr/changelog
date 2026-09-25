@@ -6,6 +6,50 @@
   },
   "updates": [
     {
+      "version": "Path #1 (V1.21.20.#1)",
+      "date": "24/09/26",
+      "changes": [
+        {
+          "type": "separator",
+          "text": "GAMEMODES"
+        },
+        {
+          "tag": "FIX",
+          "type": "ink-fix",
+          "text": "Boat racing spawning mobs inside the gamemode"
+        },
+        {
+          "tag": "FIX",
+          "type": "ink-fix",
+          "text": "Build battle water and other liquids not resetting correctly"
+        },
+        {
+          "type": "separator",
+          "text": "MISC"
+        },
+        {
+          "tag": "FIX",
+          "type": "ink-fix",
+          "text": "Grave skins not loading"
+        },
+        {
+          "tag": "FIX",
+          "type": "ink-fix",
+          "text": "Smithing table not working"
+        },
+        {
+          "tag": "FIX",
+          "type": "ink-fix",
+          "text": "Removed illegal blocks from spawn (Barrier blocks, ect)"
+        },
+        {
+          "tag": "ADD",
+          "type": "ink-add",
+          "text": "If something breaks {https://dcc-x6ev.onrender.com/}[Please contact me]"
+        }
+      ]
+    },
+    {
       "version": "The patch that nobody cared about (V.1.21.20)",
       "date": "9/24/26",
       "changes": [
