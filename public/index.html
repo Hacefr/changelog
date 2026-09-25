@@ -148,7 +148,7 @@
                         <option value="online">Notice (Green)</option>
                     </select>
                 </div>
-                <input type="text" id="ann-msg" placeholder="e.g. Server is down for updates! Back online in ~30 mins.">
+                <input type="text" id="ann-msg" placeholder="e.g. Down for updates! Check our {https://discord.gg/...}[Discord] for updates!">
             </div>
 
             <div style="display: flex; gap: 8px; margin-bottom: 15px; border-bottom: 2px solid #333; padding-bottom: 12px;">
@@ -168,7 +168,7 @@
             </div>
 
             <div class="input-group">
-                <label>Changes & Categories</label>
+                <label>Changes & Categories (Supports {https://link}[Label])</label>
                 <div id="items-container"></div>
                 <div style="margin-top: 8px; display: flex; gap: 8px;">
                     <button class="btn" onclick="addChangeRow('ADD', 'ink-add', '')">+ Add Change</button>
@@ -183,6 +183,7 @@
             <p id="dash-msg" style="font-size: 11px; margin-top: 12px;"></p>
         </div>
 
+        <!-- LIVE PREVIEW BOOK -->
         <div class="preview-pane">
             <div class="page">
                 <div class="preview-title">Live Preview</div>
@@ -205,8 +206,15 @@
             return `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getFullYear()).slice(-2)}`;
         }
 
+        // PARSER: Converts {https://link}[Label] into clickable link
+        function parseLinks(text) {
+            if (!text) return "";
+            return text.replace(/\{(https?:\/\/[^\}]+)\}\[([^\]]+)\]/g, (match, url, label) => {
+                return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #174ea6; text-decoration: underline; font-weight: bold; cursor: pointer;">${label}</a>`;
+            });
+        }
+
         async function initAuth() {
-            // If already logged in, go straight to dashboard!
             if (token) {
                 showDashboard();
                 return;
@@ -242,7 +250,6 @@
             const data = await res.json();
 
             if (data.success) {
-                // Instantly save token and open dashboard (NO RELOAD!)
                 localStorage.setItem("mc_admin_token", data.token);
                 token = data.token;
                 showDashboard();
@@ -364,7 +371,7 @@
             const ver = document.getElementById('edit-ver').value;
             const date = document.getElementById('edit-date').value;
 
-            document.getElementById('prev-ver').innerText = ver || "Untitled Version";
+            document.getElementById('prev-ver').innerHTML = parseLinks(ver) || "Untitled Version";
             document.getElementById('prev-date').innerText = date || "00/00/00";
 
             const container = document.getElementById('items-container');
@@ -378,7 +385,7 @@
                     changes.push({ type: "separator", text: txt });
                     const div = document.createElement('div');
                     div.className = 'category-header';
-                    div.innerText = `✦ ${txt} ✦`;
+                    div.innerHTML = `✦ ${parseLinks(txt)} ✦`;
                     listEl.appendChild(div);
                 } else if (r.classList.contains('change-item-row')) {
                     const sel = r.querySelector('select');
@@ -386,7 +393,7 @@
                     const tag = sel.options[sel.selectedIndex].text.replace(/[\[\]]/g, '');
                     changes.push({ tag, type: sel.value, text: txt });
                     const li = document.createElement('li');
-                    li.innerHTML = `<span class="ink-tag ${sel.value}">[${tag}]</span> ${txt || "..."}`;
+                    li.innerHTML = `<span class="ink-tag ${sel.value}">[${tag}]</span> ${parseLinks(txt) || "..."}`;
                     listEl.appendChild(li);
                 }
             });
