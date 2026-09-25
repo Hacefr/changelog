@@ -32,7 +32,7 @@
             margin: 0;
         }
 
-        /* --- ADMIN ANNOUNCEMENT / SERVER STATUS BANNER --- */
+        /* Server Announcement Banner */
         .status-banner {
             max-width: 900px;
             width: 100%;
@@ -40,7 +40,7 @@
             padding: 14px 20px;
             border-radius: 4px;
             border: 3px solid #000;
-            display: none; /* Shown dynamically if set */
+            display: none;
             box-shadow: 0 6px 20px rgba(0,0,0,0.8);
             line-height: 1.5;
         }
@@ -72,7 +72,7 @@
             opacity: 0.95;
         }
 
-        /* --- MAIN WORKSPACE --- */
+        /* Main Workspace Wrapper */
         .workspace {
             display: flex;
             gap: 25px;
@@ -126,14 +126,12 @@
             padding-right: 4px;
         }
 
-        /* Scrollbar */
         .page-content::-webkit-scrollbar { width: 5px; }
         .page-content::-webkit-scrollbar-thumb { background: #8e7b57; }
 
         .update-version { font-size: 15px; color: #1f1a13; font-weight: bold; margin-bottom: 2px; }
         .update-date { font-size: 10px; color: #64553f; margin-bottom: 14px; display: block; }
 
-        /* Categories & Lists */
         .category-header {
             color: #5c3b1e;
             font-size: 12px;
@@ -252,10 +250,10 @@
 </head>
 <body>
 
-    <!-- SERVER STATUS / ANNOUNCEMENT BANNER -->
+    <!-- SERVER NOTICE / MAINTENANCE ALERT -->
     <div class="status-banner" id="status-banner">
         <div class="status-title" id="status-title">⚡ SERVER NOTICE</div>
-        <div class="status-body" id="status-body">Notice details loading...</div>
+        <div class="status-body" id="status-body">Loading notice...</div>
     </div>
 
     <div class="workspace">
@@ -286,10 +284,17 @@
         let changelogPages = [];
         let currentPage = 0;
 
+        // PARSER: Converts {https://link}[Clickable Label] into styled <a> links
+        function parseLinks(text) {
+            if (!text) return "";
+            return text.replace(/\{(https?:\/\/[^\}]+)\}\[([^\]]+)\]/g, (match, url, label) => {
+                return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #174ea6; text-decoration: underline; font-weight: bold; cursor: pointer;">${label}</a>`;
+            });
+        }
+
         fetch('changelog.json?t=' + Date.now())
             .then(res => res.json())
             .then(data => {
-                // Support both new { announcement, updates } structure or legacy array
                 if (data.updates) {
                     renderAnnouncement(data.announcement);
                     changelogPages = data.updates;
@@ -310,7 +315,7 @@
 
             banner.className = `status-banner status-${ann.type}`;
             title.innerHTML = ann.type === "maintenance" ? "🛠 SERVER MAINTENANCE" : "📢 ANNOUNCEMENT";
-            body.innerHTML = ann.message;
+            body.innerHTML = parseLinks(ann.message);
             banner.style.display = "block";
         }
 
@@ -332,16 +337,15 @@
             const prevBtn = document.getElementById("prev-btn");
             const nextBtn = document.getElementById("next-btn");
 
-            // Renders changes and separator categories
             let itemsHtml = pageData.changes.map(c => {
                 if (c.type === "separator") {
-                    return `<div class="category-header">✦ ${c.text} ✦</div>`;
+                    return `<div class="category-header">✦ ${parseLinks(c.text)} ✦</div>`;
                 }
-                return `<li><span class="ink-tag ${c.type}">[${c.tag}]</span> ${c.text}</li>`;
+                return `<li><span class="ink-tag ${c.type}">[${c.tag}]</span> ${parseLinks(c.text)}</li>`;
             }).join('');
 
             contentEl.innerHTML = `
-                <div class="update-version">${pageData.version}</div>
+                <div class="update-version">${parseLinks(pageData.version)}</div>
                 <span class="update-date">${pageData.date}</span>
                 <ul class="change-list">${itemsHtml}</ul>
             `;
